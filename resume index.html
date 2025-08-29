@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Resume Builder — Template</title>
+  <style>
+    :root{
+      --bg:#f6f7fb; --card:#ffffff; --accent:#0f62fe; --muted:#6b7280; --radius:12px;
+      --max-w:1100px;
+    }
+    *{box-sizing:border-box}
+    body{font-family:Inter,system-ui,Arial,sans-serif;background:var(--bg);margin:0;color:#111}
+    .wrap{max-width:var(--max-w);margin:28px auto;padding:20px}
+    .grid{display:grid;grid-template-columns:360px 1fr;gap:18px}
+    .panel{background:var(--card);padding:18px;border-radius:var(--radius);box-shadow:0 6px 20px rgba(12,15,30,0.07)}
+    h2{margin:0 0 12px;font-size:18px}
+    label{display:block;font-size:13px;margin-top:10px;color:var(--muted)}
+    input[type=text], input[type=email], input[type=tel], textarea, select{width:100%;padding:8px 10px;margin-top:6px;border-radius:8px;border:1px solid #e6e9ef;font-size:14px}
+    textarea{min-height:84px;resize:vertical}
+    .btn{display:inline-block;padding:8px 12px;border-radius:8px;background:var(--accent);color:#fff;text-decoration:none;border:none;cursor:pointer;margin-right:8px}
+    .muted{color:var(--muted);font-size:13px}
+    .preview{padding:28px}
+    .resume{max-width:800px;margin:0 auto;background:linear-gradient(180deg,rgba(255,255,255,0.98),rgba(255,255,255,0.98));padding:28px;border-radius:8px}
+    .row{display:flex;gap:18px}
+    .leftcol{flex:1}
+    .rightcol{width:220px}
+    .name{font-size:24px;font-weight:700}
+    .title{color:var(--muted);margin-top:6px}
+    .section{margin-top:16px}
+    .section h3{margin:0 0 8px;font-size:15px}
+    .item{margin-bottom:10px}
+    .small{font-size:13px;color:var(--muted)}
+    .controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px}
+    .theme-picker{display:flex;gap:8px;align-items:center}
+    .theme-dot{width:22px;height:22px;border-radius:6px;cursor:pointer;border:2px solid transparent}
+    .theme-dot.selected{box-shadow:0 0 0 3px rgba(15,98,254,0.12)}
+    .footer-note{font-size:13px;color:var(--muted);margin-top:12px}
+    @media (max-width:900px){.grid{grid-template-columns:1fr}.rightcol{width:180px}}
+    /* print-friendly */
+    @media print{
+      body{background:#fff}
+      .wrap, .panel{box-shadow:none;border-radius:0}
+      .grid{grid-template-columns:1fr}
+      .panel:not(.preview-panel){display:none}
+      .preview-panel{width:100%;}
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <h1 style="font-size:20px;margin:0">Resume Builder — Template</h1>
+      <div>
+        <button class="btn" id="downloadJson">Download JSON</button>
+        <button class="btn" id="downloadHtml">Download HTML</button>
+        <button class="btn" id="printBtn">Export PDF</button>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="panel">
+        <h2>Personal Details</h2>
+        <label>Full name<input id="fullName" type="text" value="Harshitha R"/></label>
+        <label>Professional title<input id="profTitle" type="text" value="Software Developer"/></label>
+        <label>Email<input id="email" type="email" value="harshitha@example.com"/></label>
+        <label>Phone<input id="phone" type="tel" value="+91 98765 43210"/></label>
+        <label>Location<input id="location" type="text" value="Bengaluru, India"/></label>
+
+        <h2 style="margin-top:14px">Summary</h2>
+        <label>Short summary<textarea id="summary">Product-focused software engineer with 3+ years building web apps and APIs. Skilled in Python, JavaScript and data structures. Passionate about UX and performance.</textarea></label>
+
+        <h2 style="margin-top:14px">Experience (add up to 6)</h2>
+        <div id="experienceList"></div>
+        <div style="margin-top:8px">
+          <button class="btn" id="addExperience">Add Experience</button>
+        </div>
+
+        <h2 style="margin-top:14px">Education</h2>
+        <div id="educationList"></div>
+        <div style="margin-top:8px">
+          <button class="btn" id="addEducation">Add Education</button>
+        </div>
+
+        <h2 style="margin-top:14px">Skills</h2>
+        <label>Comma-separated skills<input id="skills" type="text" value="Python, JavaScript, React, SQL"/></label>
+
+        <h2 style="margin-top:14px">Settings</h2>
+        <label>Primary color
+          <select id="colorPreset">
+            <option value="#0f62fe">Blue</option>
+            <option value="#0b8a5b">Green</option>
+            <option value="#b91c1c">Red</option>
+            <option value="#6b21a8">Purple</option>
+          </select>
+        </label>
+        <div class="controls">
+          <label style="display:flex;align-items:center;gap:8px"><input id="showPhoto" type="checkbox"/> Show placeholder photo</label>
+          <label style="display:flex;align-items:center;gap:8px"><input id="compact" type="checkbox"/> Compact layout</label>
+        </div>
+
+        <div class="footer-note">Tip: Edit fields on the left to update the live preview instantly. Use "Export PDF" to print or save as PDF.</div>
+      </div>
+
+      <div class="panel preview-panel preview" id="previewPanel">
+        <div class="resume" id="resumePreview">
+          <div class="row">
+            <div class="leftcol">
+              <div class="name" id="p_name">Harshitha R</div>
+              <div class="title" id="p_title">Software Developer</div>
+              <div style="margin-top:10px" class="small" id="p_contact">harshitha@example.com • +91 98765 43210 • Bengaluru, India</div>
+              <div class="section" id="p_summary_wrap"><h3>Summary</h3><div id="p_summary">Product-focused software engineer with 3+ years building web apps and APIs. Skilled in Python, JavaScript and data structures. Passionate about UX and performance.</div></div>
+
+              <div class="section" id="p_experience_wrap"><h3>Experience</h3><div id="p_experience"></div></div>
+
+              <div class="section" id="p_education_wrap"><h3>Education</h3><div id="p_education"></div></div>
+
+            </div>
+            <div class="rightcol" id="sidebar">
+              <div id="photoHolder" style="width:100%;height:120px;border-radius:8px;background:#eee;display:flex;align-items:center;justify-content:center;margin-bottom:12px">Photo</div>
+              <div class="section"><h3>Skills</h3><div id="p_skills" class="small"></div></div>
+              <div class="section"><h3>Extras</h3><div class="small">Languages: English, Hindi</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <template id="expTpl">
+    <div class="expItem item">
+      <label>Company<input class="exp_company" type="text" value="Company Name"/></label>
+      <label>Role<input class="exp_role" type="text" value="Role Title"/></label>
+      <label>Duration<input class="exp_duration" type="text" value="2022 — Present"/></label>
+      <label>Details<textarea class="exp_details">- Built features
+- Improved performance</textarea></label>
+      <div style="margin-top:8px"><button class="btn expRemove">Remove</button></div>
+    </div>
+  </template>
+
+  <template id="eduTpl">
+    <div class="eduItem item">
+      <label>Institution<input class="edu_institution" type="text" value="University / College"/></label>
+      <label>Degree & Year<input class="edu_degree" type="text" value="B.Sc — 2020"/></label>
+      <label>Notes<textarea class="edu_notes">Relevant coursework or achievements</textarea></label>
+      <div style="margin-top:8px"><button class="btn eduRemove">Remove</button></div>
+    </div>
+  </template>
+
+  <script>
+    // Helpers
+    const $ = sel => document.querySelector(sel);
+    const $$ = sel => Array.from(document.querySelectorAll(sel));
+
+    // Initial wiring
+    const fields = ['fullName','profTitle','email','phone','location','summary','skills'];
+    fields.forEach(id => { const el = $("#"+id); if(el) el.addEventListener('input', render); });
+    $('#colorPreset').addEventListener('change', e=>{ document.documentElement.style.setProperty('--accent', e.target.value); render(); });
+    $('#showPhoto').addEventListener('change', render);
+    $('#compact').addEventListener('change', render);
+
+    // Experience / Education list functions
+    function addExperience(data){
+      const tpl = document.getElementById('expTpl').content.cloneNode(true);
+      const container = tpl.querySelector('.expItem');
+      if(data){ container.querySelector('.exp_company').value = data.company || ''; container.querySelector('.exp_role').value = data.role||''; container.querySelector('.exp_duration').value = data.duration||''; container.querySelector('.exp_details').value = data.details||''; }
+      document.getElementById('experienceList').appendChild(container);
+      bindExpEvents(); render();
+    }
+    function bindExpEvents(){
+      $$('.expRemove').forEach(btn=>{ btn.onclick = e=>{ btn.closest('.expItem').remove(); render(); } });
+      $$('.exp_company, .exp_role, .exp_duration, .exp_details').forEach(el=> el.oninput = render);
+    }
+    function addEducation(data){
+      const tpl = document.getElementById('eduTpl').content.cloneNode(true);
+      const container = tpl.querySelector('.eduItem');
+      if(data){ container.querySelector('.edu_institution').value=data.institution||''; container.querySelector('.edu_degree').value=data.degree||''; container.querySelector('.edu_notes').value=data.notes||''; }
+      document.getElementById('educationList').appendChild(container);
+      bindEduEvents(); render();
+    }
+    function bindEduEvents(){
+      $$('.eduRemove').forEach(btn=>{ btn.onclick = e=>{ btn.closest('.eduItem').remove(); render(); } });
+      $$('.edu_institution, .edu_degree, .edu_notes').forEach(el=> el.oninput = render);
+    }
+
+    // add default example entries
+    addExperience({company:'Acme Systems', role:'Frontend Engineer', duration:'2021 — Present', details:'- Built customer-facing dashboard\n- Led migration to React'});
+    addEducation({institution:'National Institute of Tech', degree:'B.Tech Computer Science — 2020', notes:'GPA: 8.4/10'});
+
+    document.getElementById('addExperience').onclick = ()=> addExperience();
+    document.getElementById('addEducation').onclick = ()=> addEducation();
+
+    // Render preview
+    function render(){
+      $('#p_name').textContent = $('#fullName').value || 'Your Name';
+      $('#p_title').textContent = $('#profTitle').value || '';
+      $('#p_contact').textContent = `${$('#email').value || ''} • ${$('#phone').value || ''} • ${$('#location').value || ''}`;
+      $('#p_summary').textContent = $('#summary').value || '';
+      $('#p_skills').textContent = ($('#skills').value || '').split(',').map(s=>s.trim()).filter(Boolean).join(' • ');
+
+      // experience
+      const expArea = $('#p_experience'); expArea.innerHTML = '';
+      $$('#experienceList .expItem').forEach(node=>{
+        const company = node.querySelector('.exp_company').value;
+        const role = node.querySelector('.exp_role').value;
+        const dur = node.querySelector('.exp_duration').value;
+        const details = node.querySelector('.exp_details').value;
+        const el = document.createElement('div'); el.className='item';
+        el.innerHTML = `<div style=\"font-weight:600\">${role || 'Role'} <span style=\"font-weight:400;color:var(--muted);font-size:13px\"> — ${company||''}</span></div><div class=\"small\">${dur||''}</div><div style=\"margin-top:6px;font-size:14px;color:#222\">${escapeHtml(details).replace(/\n/g,'<br>')}</div>`;
+        expArea.appendChild(el);
+      });
+
+      // education
+      const eduArea = $('#p_education'); eduArea.innerHTML = '';
+      $$('#educationList .eduItem').forEach(node=>{
+        const inst = node.querySelector('.edu_institution').value;
+        const deg = node.querySelector('.edu_degree').value;
+        const notes = node.querySelector('.edu_notes').value;
+        const el = document.createElement('div'); el.className='item';
+        el.innerHTML = `<div style=\"font-weight:600\">${inst||''}</div><div class=\"small\">${deg||''}</div><div style=\"margin-top:6px\">${escapeHtml(notes).replace(/\n/g,'<br>')}</div>`;
+        eduArea.appendChild(el);
+      });
+
+      // photo
+      $('#photoHolder').style.display = $('#showPhoto').checked ? 'flex' : 'none';
+
+      // compact layout
+      if($('#compact').checked){ document.getElementById('resumePreview').style.padding='12px'; document.querySelectorAll('#resumePreview .section h3').forEach(h=>h.style.display='none'); }
+      else{ document.getElementById('resumePreview').style.padding='28px'; document.querySelectorAll('#resumePreview .section h3').forEach(h=>h.style.display='block'); }
+    }
+
+    function escapeHtml(text){ return (text||'').replace(/[&<>"]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m])); }
+
+    // Export / Save
+    $('#printBtn').onclick = ()=>{ window.print(); };
+
+    $('#downloadJson').onclick = ()=>{
+      const payload = collectData();
+      const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = (payload.fullName||'resume').replace(/\s+/g,'_')+".json"; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+    };
+
+    $('#downloadHtml').onclick = ()=>{
+      const html = `<!doctype html>` + '\n' + document.getElementById('resumePreview').outerHTML + '\n' + '<style>body{font-family:Inter,system-ui,Arial,sans-serif;padding:24px;background:#fff}.resume{max-width:800px;margin:0 auto}</style>';
+      const blob = new Blob([html], {type:'text/html'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = (document.getElementById('fullName').value||'resume').replace(/\s+/g,'_')+".html"; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+    };
+
+    function collectData(){
+      return {
+        fullName: $('#fullName').value,
+        profTitle: $('#profTitle').value,
+        email: $('#email').value,
+        phone: $('#phone').value,
+        location: $('#location').value,
+        summary: $('#summary').value,
+        skills: $('#skills').value.split(',').map(s=>s.trim()).filter(Boolean),
+        experience: $$('#experienceList .expItem').map(node=>({ company: node.querySelector('.exp_company').value, role: node.querySelector('.exp_role').value, duration: node.querySelector('.exp_duration').value, details: node.querySelector('.exp_details').value })),
+        education: $$('#educationList .eduItem').map(node=>({ institution: node.querySelector('.edu_institution').value, degree: node.querySelector('.edu_degree').value, notes: node.querySelector('.edu_notes').value })),
+        settings: { color: $('#colorPreset').value, showPhoto: $('#showPhoto').checked, compact: $('#compact').checked }
+      };
+    }
+
+    // init render
+    render();
+  </script>
+</body>
+</html>
