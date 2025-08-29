@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Resume Template Builder</title>
+  <style>
+    :root{
+      --bg:#0f172a; /* slate-900 */
+      --panel:#111827; /* gray-900 */
+      --muted:#94a3b8; /* slate-400 */
+      --ink:#e5e7eb; /* gray-200 */
+      --accent:#06b6d4; /* cyan-500 */
+      --accent-ink:#0e7490; /* cyan-700 */
+      --resume-bg:#ffffff;
+      --resume-ink:#0f172a;
+      --resume-accent: var(--accent);
+      --resume-font: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      --resume-serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+    }
+    *{box-sizing: border-box}
+    html,body{height:100%;}
+    body{margin:0; background:linear-gradient(120deg,#0b1025,#0c122b 40%,#0b122d); color:var(--ink); font-family: Inter, var(--resume-font)}
+    .app{display:grid; grid-template-columns: 380px 1fr; gap:16px; height:100vh; padding:16px}
+    .panel{background:var(--panel); border:1px solid #1f2937; border-radius:16px; overflow:auto}
+    .panel h2{margin:0; padding:16px; border-bottom:1px solid #1f2937; font-size:16px; letter-spacing:.3px; color:#e2e8f0}
+    .panel .section{padding:16px; border-bottom:1px dashed #1f2937}
+    .row{display:flex; gap:8px}
+    label{font-size:12px; color:var(--muted)}
+    input, textarea, select{width:100%; background:#0b1222; border:1px solid #1f2937; color:#e5e7eb; padding:10px 12px; border-radius:10px; outline:none}
+    textarea{min-height:96px; resize:vertical}
+    .btn{appearance:none; border:1px solid #1f2937; background:#0b1222; color:#e5e7eb; padding:10px 12px; border-radius:10px; cursor:pointer}
+    .btn.primary{background:var(--accent); color:#001018; border-color:transparent}
+    .btn.ghost{background:transparent}
+    .btn.small{padding:6px 10px; font-size:12px}
+    .toolbar{display:flex; gap:8px; padding:12px 16px; border-bottom:1px solid #1f2937; align-items:center; justify-content:space-between}
+    .tokens{display:flex; flex-wrap:wrap; gap:8px}
+    .token{background:#0b1222; border:1px solid #1f2937; padding:6px 10px; border-radius:999px; font-size:12px}
+    .token .x{margin-left:8px; cursor:pointer; color:#94a3b8}
+
+    /* Resume canvas */
+    .canvas{background:#071022; display:flex; align-items:center; justify-content:center; overflow:auto; border-radius:16px}
+    .page-wrap{padding:24px;}
+    .page{width:210mm; min-height:297mm; background:var(--resume-bg); color:var(--resume-ink); box-shadow:0 20px 60px rgba(0,0,0,.35); border-radius:8px; overflow:hidden;}
+    .page-inner{padding:28mm 22mm; font-family: var(--resume-font);}
+    .hdr{display:flex; align-items:flex-end; justify-content:space-between; gap:16px;}
+    .name{font-size:28px; font-weight:800; letter-spacing:.2px}
+    .role{color:var(--resume-accent); font-weight:600; margin-top:4px}
+    .contact{font-size:12px; color:#475569; display:flex; gap:12px; flex-wrap:wrap;}
+    .section-title{font-size:14px; letter-spacing:.2px; text-transform:uppercase; color:#0f172a; border-bottom:2px solid var(--resume-accent); padding-bottom:6px; margin-top:20px}
+    .item{margin:12px 0}
+    .item .top{display:flex; justify-content:space-between; gap:12px; font-weight:600}
+    .item .sub{font-size:12px; color:#334155}
+    .bullets{margin:6px 0 0 16px}
+    .bullets li{margin:6px 0}
+    .pill{display:inline-block; border:1px solid #e2e8f0; padding:4px 8px; border-radius:999px; margin:4px 6px 0 0; font-size:12px}
+
+    /* Template variants */
+    .t-classic .page-inner{padding:28mm 22mm}
+    .t-minimal .section-title{border-bottom:1px solid #e2e8f0; text-transform:none; font-weight:700}
+    .t-sidebar{display:grid}
+    .t-sidebar .page-inner{display:grid; grid-template-columns: 34% 1fr; gap:18px; padding:0}
+    .t-sidebar .left{background:#f3f4f6; padding:22mm 12mm}
+    .t-sidebar .right{padding:22mm}
+    .t-sidebar .name{font-size:24px}
+
+    /* Print */
+    @media print{
+      body{background:white}
+      .app{display:block; padding:0}
+      .panel{display:none}
+      .canvas{background:white}
+      .page{box-shadow:none; width:auto; min-height:auto}
+      .page-inner{padding:0}
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="panel" id="editor">
+      <div class="toolbar">
+        <div style="display:flex; gap:8px">
+          <button class="btn small" id="loadDemo">Load demo</button>
+          <button class="btn small" id="saveJSON">Save JSON</button>
+          <label class="btn small" for="loadJSON" style="cursor:pointer">Load JSON</label>
+          <input id="loadJSON" type="file" accept="application/json" style="display:none" />
+        </div>
+        <div style="display:flex; gap:8px">
+          <button class="btn small" id="downloadHTML">Download HTML</button>
+          <button class="btn primary small" id="exportPDF">Export PDF</button>
+        </div>
+      </div>
+      <h2>Resume Builder</h2>
+      <div class="section">
+        <div class="row">
+          <div style="flex:1">
+            <label>Full Name</label>
+            <input id="name" placeholder="e.g., Priya Sharma" />
+          </div>
+        </div>
+        <div class="row">
+          <div style="flex:1">
+            <label>Headline / Role</label>
+            <input id="role" placeholder="e.g., Frontend Developer" />
+          </div>
+        </div>
+        <div class="row">
+          <div style="flex:1">
+            <label>Email</label>
+            <input id="email" placeholder="you@email.com" />
+          </div>
+          <div style="flex:1">
+            <label>Phone</label>
+            <input id="phone" placeholder="+91 …" />
+          </div>
+        </div>
+        <div class="row">
+          <div style="flex:1">
+            <label>Location</label>
+            <input id="location" placeholder="City, Country" />
+          </div>
+          <div style="flex:1">
+            <label>Website</label>
+            <input id="website" placeholder="https://…" />
+          </div>
+        </div>
+        <div class="row">
+          <div style="flex:1">
+            <label>LinkedIn</label>
+            <input id="linkedin" placeholder="linkedin.com/in/…" />
+          </div>
+          <div style="flex:1">
+            <label>GitHub</label>
+            <input id="github" placeholder="github.com/…" />
+          </div>
+        </div>
+      </div>
+      <div class="section">
+        <label>Professional Summary</label>
+        <textarea id="summary" placeholder="2–3 lines that showcase your impact"></textarea>
+      </div>
+      <div class="section" id="skillsSec">
+        <label>Skills (comma-separated)</label>
+        <input id="skills" placeholder="React, TypeScript, Node, AWS" />
+      </div>
+
+      <div class="section" id="expSec">
+        <div style="display:flex; justify-content:space-between; align-items:center">
+          <label>Experience</label>
+          <button class="btn small" id="addExp">+ Add</button>
+        </div>
+        <div id="expList"></div>
+      </div>
+
+      <div class="section" id="eduSec">
+        <div style="display:flex; justify-content:space-between; align-items:center">
+          <label>Education</label>
+          <button class="btn small" id="addEdu">+ Add</button>
+        </div>
+        <div id="eduList"></div>
+      </div>
+
+      <div class="section" id="projSec">
+        <div style="display:flex; justify-content:space-between; align-items:center">
+          <label>Projects</label>
+          <button class="btn small" id="addProj">+ Add</button>
+        </div>
+        <div id="projList"></div>
+      </div>
+
+      <div class="section">
+        <div class="row">
+          <div style="flex:1">
+            <label>Template</label>
+            <select id="template">
+              <option value="classic">Classic</option>
+              <option value="minimal">Minimal</option>
+              <option value="sidebar">Sidebar</option>
+            </select>
+          </div>
+          <div style="flex:1">
+            <label>Accent Color</label>
+            <input id="accent" type="color" value="#06b6d4" />
+          </div>
+        </div>
+        <div class="row" style="margin-top:8px">
+          <div style="flex:1">
+            <label>Font</label>
+            <select id="font">
+              <option value="sans">Sans Serif</option>
+              <option value="serif">Serif</option>
+            </select>
+          </div>
+          <div style="flex:1">
+            <label>Base Size</label>
+            <select id="basesize">
+              <option value="1">100%</option>
+              <option value="0.95">95%</option>
+              <option value="0.9">90%</option>
+              <option value="1.05">105%</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="section" style="display:flex; gap:8px; flex-wrap:wrap">
+        <button class="btn ghost small" id="reset">Reset</button>
+        <button class="btn ghost small" id="clearLocal">Clear Autosave</button>
+      </div>
+    </aside>
+
+    <main class="panel canvas">
+      <div class="page-wrap">
+        <div class="page t-classic" id="page">
+          <div class="page-inner" id="pageInner">
+            <!-- Rendered resume goes here -->
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const $ = (s, r=document) => r.querySelector(s);
+    const $$ = (s, r=document) => Array.from(r.querySelectorAll(s));
+
+    const state = {
+      name: '', role: '', email: '', phone: '', location: '', website: '', linkedin: '', github: '',
+      summary: '', skills: [],
+      experience: [], // {role, company, location, start, end, bullets: []}
+      education: [],  // {degree, school, year, details}
+      projects: [],   // {name, link, description, bullets: []}
+      ui: { template:'classic', accent:'#06b6d4', font:'sans', base:1 }
+    };
+
+    const els = {
+      name: $('#name'), role: $('#role'), email: $('#email'), phone: $('#phone'), location: $('#location'), website: $('#website'), linkedin: $('#linkedin'), github: $('#github'),
+      summary: $('#summary'), skills: $('#skills'),
+      addExp: $('#addExp'), expList: $('#expList'),
+      addEdu: $('#addEdu'), eduList: $('#eduList'),
+      addProj: $('#addProj'), projList: $('#projList'),
+      template: $('#template'), accent: $('#accent'), font: $('#font'), base: $('#basesize'),
+      exportPDF: $('#exportPDF'), downloadHTML: $('#downloadHTML'), saveJSON: $('#saveJSON'), loadJSON: $('#loadJSON'), loadDemo: $('#loadDemo'), reset: $('#reset'), clearLocal: $('#clearLocal'),
+      page: $('#page'), pageInner: $('#pageInner')
+    };
+
+    // Autosave
+    const LS_KEY = 'resume_builder_v1';
+    function autosave(){ localStorage.setItem(LS_KEY, JSON.stringify(state)); }
+    function autoload(){ const s = localStorage.getItem(LS_KEY); if(!s) return; try{Object.assign(state, JSON.parse(s)); syncInputs(); render();}catch(e){console.warn(e)} }
+
+    function syncInputs(){
+      const s=state; Object.assign(els, els);
+      els.name.value=s.name||''; els.role.value=s.role||''; els.email.value=s.email||''; els.phone.value=s.phone||'';
+      els.location.value=s.location||''; els.website.value=s.website||''; els.linkedin.value=s.linkedin||''; els.github.value=s.github||'';
+      els.summary.value=s.summary||''; els.skills.value=s.skills.join(', ');
+      els.template.value=s.ui.template; els.accent.value=s.ui.accent; els.font.value=s.ui.font; els.base.value=String(s.ui.base);
+      // rebuild dynamic lists
+      buildDynamicLists();
+    }
+
+    function onInput(){
+      state.name = els.name.value.trim();
+      state.role = els.role.value.trim();
+      state.email = els.email.value.trim();
+      state.phone = els.phone.value.trim();
+      state.location = els.location.value.trim();
+      state.website = els.website.value.trim();
+      state.linkedin = els.linkedin.value.trim();
+      state.github = els.github.value.trim();
+      state.summary = els.summary.value.trim();
+      state.skills = els.skills.value.split(',').map(s=>s.trim()).filter(Boolean);
+      state.ui.template = els.template.value;
+      state.ui.accent = els.accent.value;
+      state.ui.font = els.font.value;
+      state.ui.base = parseFloat(els.base.value);
+      autosave();
+      render();
+    }
+
+    // Dynamic list builders
+    function buildDynamicLists(){
+      // Experience
+      els.expList.innerHTML='';
+      state.experience.forEach((x, i)=>{
+        els.expList.appendChild(expRow(x,i));
+      });
+      // Education
+      els.eduList.innerHTML='';
+      state.education.forEach((x,i)=>{
+        els.eduList.appendChild(eduRow(x,i));
+      });
+      // Projects
+      els.projList.innerHTML='';
+      state.projects.forEach((x,i)=>{
+        els.projList.appendChild(projRow(x,i));
+      });
+    }
+
+    function inputGroup(labelText, value, on){
+      const wrap = document.createElement('div');
+      wrap.className='row';
+      wrap.style.marginTop='8px';
+      const d = document.createElement('div'); d.style.flex='1';
+      const l = document.createElement('label'); l.textContent=labelText;
+      const inp = document.createElement('input'); inp.value = value||''; inp.addEventListener('input', e=>on(e.target.value));
+      d.appendChild(l); d.appendChild(inp); wrap.appendChild(d); return wrap;
+    }
+    function textareaGroup(labelText, value, on){
+      const wrap = document.createElement('div');
+      wrap.style.marginTop='8px';
+      const l = document.createElement('label'); l.textContent=labelText;
+      const ta = document.createElement('textarea'); ta.value = value||''; ta.addEventListener('input', e=>on(e.target.value));
+      wrap.appendChild(l); wrap.appendChild(ta); return wrap;
+    }
+    function smallBtn(txt, on){ const b=document.createElement('button'); b.className='btn small'; b.textContent=txt; b.addEventListener('click', on); return b; }
+
+    function expRow(x,i){
+      const card=document.createElement('div'); card.style.border='1px dashed #1f2937'; card.style.borderRadius='10px'; card.style.padding='8px'; card.style.margin='8px 0';
+      card.appendChild(inputGroup('Role', x.role, v=>{x.role=v; autosave(); render();}));
+      card.appendChild(inputGroup('Company', x.company, v=>{x.company=v; autosave(); render();}));
+      const row=document.createElement('div'); row.className='row'; row.style.marginTop='8px';
+      const d1=document.createElement('div'); d1.style.flex='1'; d1.appendChild((()=>{const l=document.createElement('label'); l.textContent='Location'; const inp=document.createElement('input'); inp.value=x.location||''; inp.oninput=e=>{x.location=e.target.value; autosave(); render();}; const w=document.createElement('div'); w.appendChild(l); w.appendChild(inp); return w;})());
+      const d2=document.createElement('div'); d2.style.flex='1'; d2.appendChild((()=>{const l=document.createElement('label'); l.textContent='Start – End'; const inp=document.createElement('input'); inp.placeholder='Jan 2023 – Present'; inp.value=x.range||''; inp.oninput=e=>{x.range=e.target.value; autosave(); render();}; const w=document.createElement('div'); w.appendChild(l); w.appendChild(inp); return w;})());
+      row.appendChild(d1); row.appendChild(d2); card.appendChild(row);
+      card.appendChild(textareaGroup('Bullets (one per line)', (x.bullets||[]).join('\n'), v=>{x.bullets=v.split('\n').map(s=>s.trim()).filter(Boolean); autosave(); render();}));
+      const actions=document.createElement('div'); actions.style.display='flex'; actions.style.gap='8px'; actions.style.marginTop='8px';
+      actions.appendChild(smallBtn('Delete', ()=>{state.experience.splice(i,1); autosave(); buildDynamicLists(); render();}));
+      actions.appendChild(smallBtn('Move ↑', ()=>{ if(i>0){[state.experience[i-1], state.experience[i]]=[state.experience[i], state.experience[i-1]]; autosave(); buildDynamicLists(); render();}}));
+      actions.appendChild(smallBtn('Move ↓', ()=>{ if(i<state.experience.length-1){[state.experience[i+1], state.experience[i]]=[state.experience[i], state.experience[i+1]]; autosave(); buildDynamicLists(); render();}}));
+      card.appendChild(actions);
+      return card;
+    }
+
+    function eduRow(x,i){
+      const card=document.createElement('div'); card.style.border='1px dashed #1f2937'; card.style.borderRadius='10px'; card.style.padding='8px'; card.style.margin='8px 0';
+      card.appendChild(inputGroup('Degree', x.degree, v=>{x.degree=v; autosave(); render();}));
+      card.appendChild(inputGroup('School', x.school, v=>{x.school=v; autosave(); render();}));
+      const row=document.createElement('div'); row.className='row'; row.style.marginTop='8px';
+      const d1=document.createElement('div'); d1.style.flex='1'; d1.appendChild((()=>{const l=document.createElement('label'); l.textContent='Year / Range'; const inp=document.createElement('input'); inp.value=x.year||''; inp.oninput=e=>{x.year=e.target.value; autosave(); render();}; const w=document.createElement('div'); w.appendChild(l); w.appendChild(inp); return w;})());
+      const d2=document.createElement('div'); d2.style.flex='1'; d2.appendChild((()=>{const l=document.createElement('label'); l.textContent='Details'; const inp=document.createElement('input'); inp.value=x.details||''; inp.oninput=e=>{x.details=e.target.value; autosave(); render();}; const w=document.createElement('div'); w.appendChild(l); w.appendChild(inp); return w;})());
+      row.appendChild(d1); row.appendChild(d2); card.appendChild(row);
+      const actions=document.createElement('div'); actions.style.display='flex'; actions.style.gap='8px'; actions.style.marginTop='8px';
+      actions.appendChild(smallBtn('Delete', ()=>{state.education.splice(i,1); autosave(); buildDynamicLists(); render();}));
+      actions.appendChild(smallBtn('Move ↑', ()=>{ if(i>0){[state.education[i-1], state.education[i]]=[state.education[i], state.education[i-1]]; autosave(); buildDynamicLists(); render();}}));
+      actions.appendChild(smallBtn('Move ↓', ()=>{ if(i<state.education.length-1){[state.education[i+1], state.education[i]]=[state.education[i], state.education[i+1]]; autosave(); buildDynamicLists(); render();}}));
+      card.appendChild(actions);
+      return card;
+    }
+
+    function projRow(x,i){
+      const card=document.createElement('div'); card.style.border='1px dashed #1f2937'; card.style.borderRadius='10px'; card.style.padding='8px'; card.style.margin='8px 0';
+      card.appendChild(inputGroup('Project Name', x.name, v=>{x.name=v; autosave(); render();}));
+      card.appendChild(inputGroup('Link', x.link, v=>{x.link=v; autosave(); render();}));
+      card.appendChild(textareaGroup('Description / Bullets (one per line)', (x.bullets||[]).join('\n'), v=>{x.bullets=v.split('\n').map(s=>s.trim()).filter(Boolean); autosave(); render();}));
+      const actions=document.createElement('div'); actions.style.display='flex'; actions.style.gap='8px'; actions.style.marginTop='8px';
+      actions.appendChild(smallBtn('Delete', ()=>{state.projects.splice(i,1); autosave(); buildDynamicLists(); render();}));
+      actions.appendChild(smallBtn('Move ↑', ()=>{ if(i>0){[state.projects[i-1], state.projects[i]]=[state.projects[i], state.projects[i-1]]; autosave(); buildDynamicLists(); render();}}));
+      actions.appendChild(smallBtn('Move ↓', ()=>{ if(i<state.projects.length-1){[state.projects[i+1], state.projects[i]]=[state.projects[i], state.projects[i+1]]; autosave(); buildDynamicLists(); render();}}));
+      card.appendChild(actions);
+      return card;
+    }
+
+    // Render resume
+    function render(){
+      document.documentElement.style.fontSize = (state.ui.base*100)+'%';
+      document.documentElement.style.setProperty('--resume-accent', state.ui.accent);
+      document.documentElement.style.setProperty('--resume-font', state.ui.font==='sans'? 'Inter, '+getComputedStyle(document.documentElement).getPropertyValue('--resume-font') : '"Source Serif 4", '+getComputedStyle(document.documentElement).getPropertyValue('--resume-serif'));
+
+      els.page.classList.remove('t-classic','t-minimal','t-sidebar');
+      els.page.classList.add('t-'+state.ui.template);
+
+      const c = [];
+      // Header
+      c.push(`<header class="hdr ${state.ui.template==='sidebar'?'left':''}">`
+        + `<div>`
+        + `<div class="name">${escapeHTML(state.name||'Your Name')}</div>`
+        + `<div class="role">${escapeHTML(state.role||'Your Role / Headline')}</div>`
+        + `</div>`
+        + `</header>`);
+
+      // Contact (sidebar vs top-right)
+      const contact = contactHTML();
+
+      if(state.ui.template==='sidebar'){
+        // Sidebar layout wrapper
+        const left = `<div class="left">${c.join('')}${contact}</div>`;
+        const right = `<div class="right">${bodySections()}</div>`;
+        els.pageInner.innerHTML = left + right;
+      } else {
+        const top = `<div class="contact" style="margin-top:8px">${contact}</div>`;
+        els.pageInner.innerHTML = c.join('') + top + bodySections();
+      }
+    }
+
+    function contactHTML(){
+      const parts = [];
+      if(state.email) parts.push(`<span>${escapeHTML(state.email)}</span>`);
+      if(state.phone) parts.push(`<span>${escapeHTML(state.phone)}</span>`);
+      if(state.location) parts.push(`<span>${escapeHTML(state.location)}</span>`);
+      if(state.website) parts.push(`<span>${linkify(state.website)}</span>`);
+      if(state.linkedin) parts.push(`<span>${linkify(state.linkedin)}</span>`);
+      if(state.github) parts.push(`<span>${linkify(state.github)}</span>`);
+      return `<div class="contact">${parts.join('')}</div>`;
+    }
+
+    function bodySections(){
+      let html='';
+      if(state.summary){
+        html += `<h3 class="section-title">Summary</h3>`
+              + `<div class="item">${escapeHTML(state.summary)}</div>`;
+      }
+      if((state.experience||[]).length){
+        html += `<h3 class="section-title">Experience</h3>` + state.experience.map(x=>
+          `<div class="item">`
+          + `<div class="top"><div>${escapeHTML(x.role||'')}</div><div class="sub">${escapeHTML(x.company||'')}${x.location? ' • '+escapeHTML(x.location):''}</div></div>`
+          + `<div class="sub">${escapeHTML(x.range||'')}</div>`
+          + (x.bullets && x.bullets.length? `<ul class="bullets">${x.bullets.map(b=>`<li>${escapeHTML(b)}</li>`).join('')}</ul>`:'')
+          + `</div>`
+        ).join('');
+      }
+      if((state.projects||[]).length){
+        html += `<h3 class="section-title">Projects</h3>` + state.projects.map(x=>
+          `<div class="item">`
+          + `<div class="top"><div>${escapeHTML(x.name||'')}</div><div class="sub">${x.link? linkify(x.link):''}</div></div>`
+          + (x.bullets && x.bullets.length? `<ul class="bullets">${x.bullets.map(b=>`<li>${escapeHTML(b)}</li>`).join('')}</ul>`:'')
+          + `</div>`
+        ).join('');
+      }
+      if(state.skills && state.skills.length){
+        html += `<h3 class="section-title">Skills</h3>`
+              + `<div class="item">${state.skills.map(s=>`<span class="pill">${escapeHTML(s)}</span>`).join('')}</div>`;
+      }
+      if((state.education||[]).length){
+        html += `<h3 class="section-title">Education</h3>` + state.education.map(x=>
+          `<div class="item">`
+          + `<div class="top"><div>${escapeHTML(x.degree||'')}</div><div class="sub">${escapeHTML(x.school||'')}</div></div>`
+          + `<div class="sub">${escapeHTML(x.year||'')} ${x.details? ' • '+escapeHTML(x.details):''}</div>`
+          + `</div>`
+        ).join('');
+      }
+      return html;
+    }
+
+    function escapeHTML(str){ return (str||'').replace(/[&<>"']/g, m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[m])); }
+    function linkify(str){ const s=str.trim(); const url = /^(http|https):\/\//.test(s)? s : 'https://'+s; return `<a href="${escapeHTML(url)}" target="_blank" style="color:var(--resume-accent); text-decoration:none">${escapeHTML(s)}</a>`; }
+
+    // Buttons
+    els.addExp.addEventListener('click', ()=>{ state.experience.push({role:'', company:'', location:'', range:'', bullets:[]}); autosave(); buildDynamicLists(); render(); });
+    els.addEdu.addEventListener('click', ()=>{ state.education.push({degree:'', school:'', year:'', details:''}); autosave(); buildDynamicLists(); render(); });
+    els.addProj.addEventListener('click', ()=>{ state.projects.push({name:'', link:'', bullets:[]}); autosave(); buildDynamicLists(); render(); });
+
+    // Core inputs
+    ['name','role','email','phone','location','website','linkedin','github','summary','skills','template','accent','font','basesize'].forEach(id=>{
+      (id==='accent'? els.accent : els[id==='basesize'?'base':id]).addEventListener(id==='accent'?'input':'change', onInput);
+    });
+
+    els.exportPDF.addEventListener('click', ()=>{ window.print(); });
+
+    els.downloadHTML.addEventListener('click', ()=>{
+      const html = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Resume - ${escapeHTML(state.name||'')}</title><style>${document.querySelector('style').innerHTML}</style></head><body><div class="page t-${state.ui.template}"><div class="page-inner">${$('#pageInner').innerHTML}</div></div></body></html>`;
+      const blob = new Blob([html], {type:'text/html'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href=url; a.download=`Resume_${(state.name||'').replace(/\s+/g,'_')||'My'}.html`; a.click(); URL.revokeObjectURL(url);
+    });
+
+    els.saveJSON.addEventListener('click', ()=>{
+      const blob = new Blob([JSON.stringify(state, null, 2)], {type:'application/json'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href=url; a.download='resume.json'; a.click(); URL.revokeObjectURL(url);
+    });
+
+    els.loadJSON.addEventListener('change', (e)=>{
+      const file = e.target.files[0]; if(!file) return; const reader = new FileReader();
+      reader.onload = ()=>{ try{ const data = JSON.parse(reader.result); Object.assign(state, data); syncInputs(); render(); autosave(); } catch(err){ alert('Invalid JSON file'); } };
+      reader.readAsText(file);
+      e.target.value='';
+    });
+
+    els.loadDemo.addEventListener('click', ()=>{
+      Object.assign(state, demoData()); syncInputs(); render(); autosave();
+    });
+
+    els.reset.addEventListener('click', ()=>{ if(confirm('Clear all fields?')){ Object.keys(state).forEach(k=>{
+      if(Array.isArray(state[k])) state[k]=[]; else if(typeof state[k]==='object') state[k]=k==='ui'? {template:'classic', accent:'#06b6d4', font:'sans', base:1} : {}; else state[k]='';
+    }); syncInputs(); render(); autosave(); }});
+
+    els.clearLocal.addEventListener('click', ()=>{ localStorage.removeItem(LS_KEY); alert('Autosave cleared.'); });
+
+    function demoData(){
+      return {
+        name: 'Priya Sharma',
+        role: 'Frontend Developer',
+        email: 'priya@example.com',
+        phone: '+91 98765 43210',
+        location: 'Hyderabad, India',
+        website: 'priyash.dev',
+        linkedin: 'linkedin.com/in/priyasharma',
+        github: 'github.com/priya',
+        summary: 'Frontend engineer with 4+ years building accessible, performant web apps. Led migrations to TypeScript and modern tooling, improving delivery speed by 30%.',
+        skills: ['JavaScript','TypeScript','React','Redux','Node.js','HTML5','CSS3','Tailwind','Vite','Jest','Cypress','REST','GraphQL'],
+        experience: [
+          { role:'Senior Frontend Developer', company:'Zentra Fintech', location:'Remote', range:'May 2023 – Present', bullets:[
+            'Delivered onboarding flow A/B tests that increased completion by 22%.',
+            'Built internal component library; reduced UI defects by 40%.',
+            'Partnered with design to establish WCAG AA color contrast and focus styles.'
+          ]},
+          { role:'Frontend Developer', company:'Nexora Labs', location:'Bengaluru', range:'Jul 2021 – Apr 2023', bullets:[
+            'Migrated legacy codebase to React 18 & Vite, cutting build times by 60%.',
+            'Implemented data grid virtualization to render 50k rows smoothly.',
+            'Introduced unit tests (Jest) achieving 80% coverage.'
+          ]}
+        ],
+        projects:[
+          { name:'MealMate', link:'mealmate.app', bullets:[
+            'PWA to plan and share weekly meals with family.',
+            'IndexedDB offline cache and background sync.'
+          ]},
+          { name:'ChartX', link:'chartx.dev', bullets:[
+            'Tiny charts component library with 5kb gzip size.',
+            'Tree‑shakable ESM modules and custom hooks.'
+          ]}
+        ],
+        education:[
+          { degree:'B.Tech, Computer Science', school:'JNTU Hyderabad', year:'2017 – 2021', details:'CGPA: 8.4/10' }
+        ],
+        ui:{ template:'classic', accent:'#06b6d4', font:'sans', base:1 }
+      };
+    }
+
+    // Init
+    ['input','change'].forEach(evt=>{
+      ['name','role','email','phone','location','website','linkedin','github','summary','skills'].forEach(id=>{
+        const el = els[id]; el.addEventListener(evt, onInput);
+      });
+    });
+    autoload();
+    if(!localStorage.getItem(LS_KEY)) { Object.assign(state, demoData()); syncInputs(); render(); }
+    else { render(); }
+  </script>
+</body>
+</html>
